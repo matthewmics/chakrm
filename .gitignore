@@ -1,7 +1,22 @@
+# dependencies
+node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
 # compiled output
-/dist
-/node_modules
-/build
+dist/
+build/
+.next/
+out/
+
+# testing / coverage
+coverage/
+/.nyc_output
 
 # Logs
 logs
@@ -14,10 +29,7 @@ lerna-debug.log*
 
 # OS
 .DS_Store
-
-# Tests
-/coverage
-/.nyc_output
+*.pem
 
 # IDEs and editors
 /.idea
@@ -27,8 +39,6 @@ lerna-debug.log*
 *.launch
 .settings/
 *.sublime-workspace
-
-# IDE - VSCode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -36,11 +46,8 @@ lerna-debug.log*
 !.vscode/extensions.json
 
 # dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env*
+!.env.example
 
 # temp directory
 .temp
@@ -54,3 +61,10 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# vercel
+.vercel

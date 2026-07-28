@@ -1,0 +1,14 @@
+{
+  "name": "chakrm",
+  "version": "0.0.1",
+  "private": true,
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "dev:api": "pnpm --filter api start:dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "test": "pnpm --filter api test"
+  },
+  "packageManager": "pnpm@11.17.0"
+}
