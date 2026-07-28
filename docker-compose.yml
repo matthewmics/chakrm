@@ -1,0 +1,35 @@
+# LOCAL DEVELOPMENT ONLY.
+# Production deploys build the same Dockerfile with `--target production`.
+#
+#   docker compose up          start the API with hot module replacement
+#   docker compose up --build  rebuild after changing dependencies
+#
+# Host port defaults to 3001 so it does not collide with `pnpm dev:web`
+# (Next.js) on 3000. Override with API_PORT.
+
+name: chakrm
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: development
+    init: true
+    ports:
+      - "${API_PORT:-3001}:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      # Bind mounts do not forward inotify events, so webpack polls instead.
+      WEBPACK_POLL: 1000
+    volumes:
+      # Mount only what you edit. Deliberately NOT mounting all of apps/api:
+      # that would shadow the image's pnpm-linked node_modules (whose symlinks
+      # point into /app/node_modules/.pnpm) and would spill dist/ onto the host.
+      - ./apps/api/src:/app/apps/api/src
+      - ./apps/api/test:/app/apps/api/test
+      - ./apps/api/nest-cli.json:/app/apps/api/nest-cli.json
+      - ./apps/api/tsconfig.json:/app/apps/api/tsconfig.json
+      - ./apps/api/tsconfig.build.json:/app/apps/api/tsconfig.build.json
+      - ./apps/api/webpack-hmr.config.js:/app/apps/api/webpack-hmr.config.js

@@ -6,6 +6,8 @@
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api start:dev",
+    "docker:dev": "docker compose up --build",
+    "docker:down": "docker compose down",
     "build": "pnpm -r build",
     "lint": "pnpm -r lint",
     "test": "pnpm --filter api test"

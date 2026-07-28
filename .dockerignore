@@ -1,0 +1,30 @@
+# Build context is the repo root. Keep it small and never ship host-built
+# artifacts into the image — deps are installed fresh from the lockfile.
+**/node_modules
+**/dist
+**/.next
+**/out
+**/build
+**/coverage
+
+.git
+.gitignore
+.claude
+**/.vscode
+**/.idea
+
+**/*.log
+**/npm-debug.log*
+**/pnpm-debug.log*
+**/yarn-error.log*
+
+**/.env
+**/.env.*
+!**/.env.example
+
+**/Dockerfile
+**/docker-compose*.yml
+.dockerignore
+
+**/*.tsbuildinfo
+**/.DS_Store
