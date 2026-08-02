@@ -37,6 +37,11 @@ ENV NODE_ENV=development \
 
 COPY apps/api ./apps/api
 
+# Generated into src/generated (see prisma/schema.prisma) so it survives the
+# docker-compose bind mount over apps/api/src; docker-compose also reruns
+# this at container start since the mount hides whatever is baked in here.
+RUN pnpm --filter api exec prisma generate
+
 EXPOSE 3000
 CMD ["pnpm", "--filter", "api", "start:dev"]
 
@@ -44,6 +49,8 @@ CMD ["pnpm", "--filter", "api", "start:dev"]
 FROM deps AS build
 
 COPY apps/api ./apps/api
+
+RUN pnpm --filter api exec prisma generate
 
 RUN pnpm --filter api build
 

@@ -23,13 +23,61 @@ services:
       PORT: 3000
       # Bind mounts do not forward inotify events, so webpack polls instead.
       WEBPACK_POLL: 1000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-chakrm}:${POSTGRES_PASSWORD:-chakrm}@db:5432/${POSTGRES_DB:-chakrm}?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    # The apps/api/src bind mount below hides whatever the image generated
+    # into src/generated at build time, so regenerate the Prisma client
+    # against the mounted source before starting the dev server.
+    command: sh -c "pnpm --filter api exec prisma generate && pnpm --filter api start:dev"
     volumes:
       # Mount only what you edit. Deliberately NOT mounting all of apps/api:
       # that would shadow the image's pnpm-linked node_modules (whose symlinks
       # point into /app/node_modules/.pnpm) and would spill dist/ onto the host.
       - ./apps/api/src:/app/apps/api/src
       - ./apps/api/test:/app/apps/api/test
+      - ./apps/api/prisma:/app/apps/api/prisma
+      - ./apps/api/prisma.config.ts:/app/apps/api/prisma.config.ts
       - ./apps/api/nest-cli.json:/app/apps/api/nest-cli.json
       - ./apps/api/tsconfig.json:/app/apps/api/tsconfig.json
       - ./apps/api/tsconfig.build.json:/app/apps/api/tsconfig.build.json
       - ./apps/api/webpack-hmr.config.js:/app/apps/api/webpack-hmr.config.js
+
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chakrm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chakrm}
+      POSTGRES_DB: ${POSTGRES_DB:-chakrm}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      # Postgres 18+ images lay out PGDATA in a major-version-specific
+      # subdirectory of this path (not directly at .../data) to support
+      # pg_upgrade --link across major versions.
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chakrm} -d ${POSTGRES_DB:-chakrm}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@chakrm.dev}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      # Skips the master password prompt on top of the login above.
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  pgadmin_data:

@@ -20,6 +20,16 @@ module.exports = function (options, webpack) {
       ignored: /node_modules/,
       ...(poll ? { poll, aggregateTimeout: 300 } : {}),
     },
+    resolve: {
+      ...options.resolve,
+      // tsconfig uses "nodenext" module resolution, which requires relative
+      // imports to carry an explicit ".js" extension even though the source
+      // file is ".ts" (e.g. the generated Prisma client). tsc understands
+      // this natively; webpack needs to be told to try ".ts" as a fallback.
+      extensionAlias: {
+        '.js': ['.js', '.ts'],
+      },
+    },
     plugins: [
       ...options.plugins,
       new webpack.HotModuleReplacementPlugin(),
