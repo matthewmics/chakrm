@@ -5,6 +5,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "dev:web": "pnpm --filter web dev",
+    "dev:admin": "pnpm --filter admin dev",
     "dev:api": "pnpm --filter api start:dev",
     "docker:dev": "docker compose up --build",
     "docker:down": "docker compose down",

@@ -1,0 +1,133 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  /* Chakrm brand tokens. Gold is the second accent alongside emerald
+     (--primary), and the "soft" variants are the 14%-alpha fills the design
+     uses for tinted pills, icon tiles, and selected states. */
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-line: var(--primary-line);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-faint: var(--faint);
+  --color-subtle: var(--subtle);
+  --color-elevated: var(--elevated);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Chakrm is dark-only, so :root and .dark carry the same palette. The app
+   still sets class="dark" on <html> so shadcn's built-in dark: variants fire. */
+:root,
+.dark {
+  --background: #0a0c0e;
+  --foreground: #edeff1;
+  --elevated: #0e1113;
+
+  --card: #141819;
+  --card-foreground: #edeff1;
+  --popover: #0e1113;
+  --popover-foreground: #edeff1;
+
+  --primary: #10b981;
+  --primary-foreground: #04140d;
+  --primary-soft: rgba(16, 185, 129, 0.14);
+  --primary-line: rgba(16, 185, 129, 0.35);
+
+  --gold: #e3b34f;
+  --gold-soft: rgba(227, 179, 79, 0.14);
+  --gold-foreground: #241a05;
+
+  --secondary: #181d1f;
+  --secondary-foreground: #edeff1;
+  --muted: #181d1f;
+  --muted-foreground: #9aa3a8;
+  --accent: #181d1f;
+  --accent-foreground: #edeff1;
+
+  --destructive: #e5675a;
+  --destructive-soft: rgba(229, 103, 90, 0.14);
+
+  --border: #22282a;
+  --input: #22282a;
+  --ring: #10b981;
+
+  /* Faint text and hairline dividers, one step quieter than muted. */
+  --faint: #5f686c;
+  --subtle: #1a1f21;
+
+  --chart-1: #10b981;
+  --chart-2: #e3b34f;
+  --chart-3: #9aa3a8;
+  --chart-4: #5f686c;
+  --chart-5: #e5675a;
+
+  --radius: 0.625rem;
+
+  --sidebar: #0e1113;
+  --sidebar-foreground: #edeff1;
+  --sidebar-primary: #10b981;
+  --sidebar-primary-foreground: #04140d;
+  --sidebar-accent: #141819;
+  --sidebar-accent-foreground: #edeff1;
+  --sidebar-border: #1a1f21;
+  --sidebar-ring: #10b981;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
