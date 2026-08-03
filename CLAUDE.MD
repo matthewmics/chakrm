@@ -8,6 +8,23 @@ This is a pnpm monorepo (workspace defined in `pnpm-workspace.yaml`, packages un
 - Use `pnpm --filter <app>` to run scripts scoped to a single app (e.g. `pnpm --filter api start:dev`), or `pnpm -r <script>` to run across all workspaces.
 - Install dependencies from the repo root with `pnpm install`; do not run `npm` or `yarn`.
 
+## Tech Stack
+
+**`apps/api`**
+- NestJS, TypeScript.
+- Database access via **Prisma 7** (the new `prisma-client` generator, not the classic one), with `@prisma/adapter-pg` over `pg` against PostgreSQL.
+- Schema lives in a single file: `apps/api/prisma/schema.prisma` (no per-model split yet). Config: `apps/api/prisma.config.ts`.
+- Generated Prisma client output goes to `apps/api/src/generated/prisma/` — auto-generated, never hand-edit.
+- Prisma wiring lives in `apps/api/src/prisma/` (`prisma.module.ts` + `prisma.service.ts`, the latter extends `PrismaClient` via the `PrismaPg` adapter).
+- Scripts: `db:generate` (`prisma generate`), `db:migrate` (`prisma migrate dev`), `db:deploy` (`prisma migrate deploy`), `db:studio`. No seeder convention exists yet.
+- Feature modules (e.g. `src/teams`, `src/events`) have not been created yet — as of writing, `src/` only has the Nest bootstrap files plus `src/prisma/`.
+
+**`apps/web` and `apps/admin`**
+- Next.js 16 (App Router), React 19, TypeScript.
+- Tailwind CSS v4 + `shadcn` (components via `@base-ui/react`, `class-variance-authority`, `clsx`, `tailwind-merge`, `tw-animate-css`).
+- `lucide-react` for icons, `recharts` for charts.
+- Both apps share the same dependency set/config shape; only the dev/start port differs (`admin` runs on 3002 via `next dev -p 3002`).
+
 ## Development Environment
 
 Only the API (`apps/api`) is Dockerized for local development. The web (`apps/web`) and admin (`apps/admin`) apps are not — run them directly with pnpm/Node on the host.
