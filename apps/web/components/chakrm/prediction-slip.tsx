@@ -52,7 +52,7 @@ export function PredictionSlip({ markets }: { markets: Market[] }) {
 
   if (predictable.length === 0) {
     return (
-      <Card className="sticky top-4 items-center gap-1.5 py-10 text-center">
+      <Card className="sticky top-4 z-10 items-center gap-1.5 py-10 text-center">
         <span className="text-sm font-medium">
           No markets open for predictions
         </span>
@@ -64,7 +64,7 @@ export function PredictionSlip({ markets }: { markets: Market[] }) {
   }
 
   return (
-    <Card className="sticky top-4 gap-4">
+    <Card className="sticky top-4 z-10 gap-4">
       <h3 className="px-(--card-spacing) font-heading text-sm font-semibold">
         Place a prediction
       </h3>

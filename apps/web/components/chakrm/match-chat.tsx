@@ -29,7 +29,7 @@ export function MatchChat({ event }: { event: SportEvent }) {
 
   return (
     <Card className="h-full gap-0 py-0">
-      <Tabs defaultValue="chat" className="h-full gap-0">
+      <Tabs defaultValue="chat" className="flex min-h-0 flex-1 flex-col gap-0">
         <div className="flex items-center justify-between border-b border-subtle px-4 py-3">
           <TabsList>
             <TabsTrigger value="chat">Live Chat</TabsTrigger>
