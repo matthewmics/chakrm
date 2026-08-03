@@ -21,9 +21,13 @@ model User {
   updatedAt DateTime @updatedAt
 }
 
+// Declaration order is deliberate: Postgres native enums sort by declared
+// order, not alphabetically, so `ORDER BY status ASC` on the events list
+// yields exactly the desired priority — live, then upcoming, then
+// settled/cancelled — with no CASE expression needed.
 enum EventStatus {
-  upcoming
   live
+  upcoming
   settled
   cancelled
 }

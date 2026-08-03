@@ -112,15 +112,44 @@ const teamSports: { teamId: string; sportId: string }[] = [
 // --- time helpers, computed relative to now so fixtures never go stale ---
 const now = Date.now();
 const MIN = 60 * 1000;
-const DAY = 24 * 60 * MIN;
-const minutesAgo = (m: number) => new Date(now - m * MIN);
-const minutesFromNow = (m: number) => new Date(now + m * MIN);
-const daysAgo = (d: number) => new Date(now - d * DAY);
-const daysFromNow = (d: number) => new Date(now + d * DAY);
+const HOUR = 60 * MIN;
+const DAY = 24 * HOUR;
+
+/**
+ * Stable pseudo-random 0..1 derived from a string (FNV-1a). Using the event id
+ * as the seed spreads start times out instead of stacking every fixture on the
+ * same timestamp, while keeping a given event's offset identical across
+ * reseeds — so a fixture doesn't jump around while you're debugging it.
+ */
+const unitFromSeed = (seed: string): number => {
+  let hash = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    hash ^= seed.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return ((hash >>> 0) % 10_000) / 10_000;
+};
+
+/** Upcoming events start at least 24h out, scattered across the following day. */
+const upcomingStart = (eventId: string) =>
+  new Date(now + DAY + unitFromSeed(eventId) * DAY);
+
+/** Settled events started at least 24h ago, scattered over the preceding day. */
+const settledStart = (eventId: string) =>
+  new Date(now - DAY - unitFromSeed(eventId) * DAY);
+
+const minutesFrom = (base: Date, m: number) =>
+  new Date(base.getTime() + m * MIN);
 
 type OptionStatus = 'active' | 'suspended' | 'hidden';
 type MarketStatusV = 'upcoming' | 'open' | 'live' | 'suspended' | 'settled' | 'cancelled';
-type EventStatusV = 'upcoming' | 'live' | 'settled' | 'cancelled';
+
+/**
+ * Deliberately narrower than the schema's EventStatus: this seed only produces
+ * upcoming and settled events, and the compiler enforces that. Market statuses
+ * stay unrestricted — market status is independent of its event's.
+ */
+type EventStatusV = 'upcoming' | 'settled';
 
 interface OptionInput {
   name: string;
@@ -141,7 +170,8 @@ interface EventInput {
   teamAId: string;
   teamBId: string;
   status: EventStatusV;
-  startDate?: Date | null;
+  // No startDate: it is derived from status + id so every fixture is scattered
+  // and consistent with its status. See upcomingStart / settledStart.
   teamAScore?: number;
   teamBScore?: number;
   winnerTeamId?: string | null;
@@ -185,7 +215,6 @@ const tournaments: TournamentInput[] = [
         teamAId: TEAM.lakers,
         teamBId: TEAM.celtics,
         status: 'settled',
-        startDate: daysAgo(3),
         teamAScore: 112,
         teamBScore: 118,
         winnerTeamId: TEAM.celtics,
@@ -210,20 +239,19 @@ const tournaments: TournamentInput[] = [
         stage: 'Regular Season',
         teamAId: TEAM.nuggets,
         teamBId: TEAM.warriors,
-        status: 'live',
-        startDate: minutesAgo(40),
-        teamAScore: 68,
-        teamBScore: 71,
+        status: 'upcoming',
         markets: [
+          // A suspended option on an otherwise open market — admins can pull a
+          // single option without closing the whole market.
           market('Match Winner', 'open', [
             opt('Denver Nuggets', '21400.00'),
             opt('Golden State Warriors', '24800.00', false, 'suspended'),
           ]),
-          market('Spread / Handicap', 'live', [
+          market('Spread / Handicap', 'open', [
             opt('Denver Nuggets (-4.5)', '18200.00'),
             opt('Golden State Warriors (+4.5)', '22600.00'),
           ]),
-          market('Total Points', 'live', [
+          market('Total Points', 'open', [
             opt('Over 219.5', '25100.00'),
             opt('Under 219.5', '19800.00'),
           ]),
@@ -236,7 +264,6 @@ const tournaments: TournamentInput[] = [
         teamAId: TEAM.bucks,
         teamBId: TEAM.knicks,
         status: 'upcoming',
-        startDate: daysFromNow(2),
         markets: [
           market('Match Winner', 'upcoming', [
             opt('Milwaukee Bucks', '4200.00'),
@@ -259,7 +286,6 @@ const tournaments: TournamentInput[] = [
         teamAId: TEAM.thunder,
         teamBId: TEAM.mavericks,
         status: 'upcoming',
-        startDate: null,
         markets: [
           market('Match Winner', 'upcoming', [
             opt('Oklahoma City Thunder', '5100.00'),
@@ -291,7 +317,6 @@ const tournaments: TournamentInput[] = [
         teamAId: TEAM.arsenal,
         teamBId: TEAM.liverpool,
         status: 'settled',
-        startDate: daysAgo(4),
         teamAScore: 2,
         teamBScore: 1,
         winnerTeamId: TEAM.arsenal,
@@ -318,7 +343,6 @@ const tournaments: TournamentInput[] = [
         teamAId: TEAM.mancity,
         teamBId: TEAM.chelsea,
         status: 'settled',
-        startDate: daysAgo(6),
         teamAScore: 1,
         teamBScore: 1,
         winnerTeamId: null,
@@ -345,7 +369,6 @@ const tournaments: TournamentInput[] = [
         teamAId: TEAM.arsenal,
         teamBId: TEAM.chelsea,
         status: 'upcoming',
-        startDate: daysFromNow(8),
         markets: [
           market('Match Result', 'upcoming', [
             opt('Arsenal', '5200.00'),
@@ -377,21 +400,19 @@ const tournaments: TournamentInput[] = [
         stage: 'Quarter-Final 1st Leg',
         teamAId: TEAM.realmadrid,
         teamBId: TEAM.bayern,
-        status: 'live',
-        startDate: minutesAgo(50),
-        teamAScore: 1,
-        teamBScore: 1,
+        status: 'upcoming',
         markets: [
-          market('Match Result', 'live', [
+          // Three-way market — the only one in the seed that is not binary.
+          market('Match Result', 'open', [
             opt('Real Madrid', '41200.00'),
             opt('Draw', '28700.00'),
             opt('Bayern Munich', '39600.00'),
           ]),
-          market('Total Goals', 'live', [
+          market('Total Goals', 'open', [
             opt('Over 2.5', '36400.00'),
             opt('Under 2.5', '29100.00'),
           ]),
-          market('Both Teams To Score', 'live', [
+          market('Both Teams To Score', 'open', [
             opt('Yes', '44200.00'),
             opt('No', '18300.00'),
           ]),
@@ -404,7 +425,6 @@ const tournaments: TournamentInput[] = [
         teamAId: TEAM.liverpool,
         teamBId: TEAM.mancity,
         status: 'upcoming',
-        startDate: daysFromNow(10),
         markets: [
           market('Match Result', 'upcoming', [
             opt('Liverpool', '6100.00'),
@@ -437,7 +457,6 @@ const tournaments: TournamentInput[] = [
         teamAId: TEAM.spirit,
         teamBId: TEAM.falcons,
         status: 'settled',
-        startDate: daysAgo(5),
         teamAScore: 2,
         teamBScore: 1,
         winnerTeamId: TEAM.spirit,
@@ -462,34 +481,31 @@ const tournaments: TournamentInput[] = [
         stage: 'Playoffs — Lower Bracket R2',
         teamAId: TEAM.liquid,
         teamBId: TEAM.tundra,
-        status: 'live',
-        startDate: minutesAgo(90),
-        teamAScore: 1,
-        teamBScore: 0,
+        status: 'upcoming',
         markets: [
-          market('Match Winner', 'live', [
+          market('Match Winner', 'open', [
             opt('Team Liquid', '51200.00'),
             opt('Tundra Esports', '32100.00'),
           ]),
-          // Market-lifecycle example: Map 1 already settled, Map 2 already
-          // open for predictions even though it hasn't started — admin
-          // controls each market independently, no forced sequencing.
+          // Market-lifecycle example: Map 2 is already taking predictions while
+          // Map 1, which happens first, is not. Admins control each market
+          // independently — nothing sequences one against another.
           market(
             'Map 1 Winner',
-            'settled',
+            'upcoming',
             [
-              opt('Team Liquid', '28700.00', true),
+              opt('Team Liquid', '28700.00'),
               opt('Tundra Esports', '19400.00'),
             ],
-            minutesAgo(50),
+            upcomingStart('event-06'),
           ),
           market(
             'Map 2 Winner',
             'open',
             [opt('Team Liquid', '9200.00'), opt('Tundra Esports', '8100.00')],
-            minutesFromNow(15),
+            minutesFrom(upcomingStart('event-06'), 45),
           ),
-          market('Total Maps', 'live', [
+          market('Total Maps', 'open', [
             opt('Over 2.5', '22300.00'),
             opt('Under 2.5', '18700.00'),
           ]),
@@ -511,7 +527,6 @@ const tournaments: TournamentInput[] = [
         teamAId: TEAM.falcons,
         teamBId: TEAM.tundra,
         status: 'upcoming',
-        startDate: daysFromNow(4),
         markets: [
           market('Match Winner', 'upcoming', [
             opt('Team Falcons', '3600.00'),
@@ -543,7 +558,6 @@ const tournaments: TournamentInput[] = [
         teamAId: TEAM.navi,
         teamBId: TEAM.faze,
         status: 'settled',
-        startDate: daysAgo(2),
         teamAScore: 2,
         teamBScore: 0,
         winnerTeamId: TEAM.navi,
@@ -569,7 +583,6 @@ const tournaments: TournamentInput[] = [
         teamAId: TEAM.vitality,
         teamBId: TEAM.g2,
         status: 'upcoming',
-        startDate: daysFromNow(6),
         markets: [
           market('Match Winner', 'upcoming', [
             opt('Team Vitality', '4400.00'),
@@ -600,20 +613,18 @@ const tournaments: TournamentInput[] = [
         stage: 'Group Stage',
         teamAId: TEAM.mouz,
         teamBId: TEAM.spirit,
-        status: 'live',
-        startDate: minutesAgo(25),
-        teamAScore: 1,
-        teamBScore: 1,
+        status: 'upcoming',
         markets: [
-          market('Match Winner', 'live', [
+          market('Match Winner', 'open', [
             opt('MOUZ', '34200.00'),
             opt('Team Spirit', '38900.00'),
           ]),
+          // Suspended sibling: predictions are paused on this market only.
           market('Map 1 Winner', 'suspended', [
             opt('MOUZ', '15600.00'),
             opt('Team Spirit', '17200.00'),
           ]),
-          market('Total Maps', 'live', [
+          market('Total Maps', 'open', [
             opt('Over 2.5', '21400.00'),
             opt('Under 2.5', '19800.00'),
           ]),
@@ -625,9 +636,10 @@ const tournaments: TournamentInput[] = [
         stage: 'Group Stage',
         teamAId: TEAM.faze,
         teamBId: TEAM.vitality,
-        status: 'cancelled',
-        startDate: daysAgo(1),
+        status: 'upcoming',
         markets: [
+          // Every option here is hidden, so the API filters them out and this
+          // event's markets come back with empty option lists.
           market('Match Winner', 'suspended', [
             opt('FaZe Clan', '12300.00', false, 'hidden'),
             opt('Team Vitality', '11800.00', false, 'hidden'),
@@ -645,6 +657,136 @@ const tournaments: TournamentInput[] = [
     ],
   },
 ];
+
+// --- bulk fixtures -----------------------------------------------------
+// The events above are hand-written to cover specific edge cases (suspended
+// options, hidden options, sibling markets out of sequence, a three-way
+// market). Everything below is generated purely to give each sport enough
+// volume to page through — the interesting cases stay curated.
+
+const EVENTS_PER_SPORT = 20;
+
+// Typed as plain strings: `teams` infers literal id types from the `as const`
+// TEAM map, which would reject the computed ids used below.
+const teamNameById = new Map<string, string>(
+  teams.map((t) => [t.id, t.name]),
+);
+
+const teamIdsForSport = (sportId: string) =>
+  teamSports.filter((ts) => ts.sportId === sportId).map((ts) => ts.teamId);
+
+/** Label for the over/under market, which differs per sport. */
+const totalsMarketName = (sportId: string) => {
+  if (sportId === SPORT.basketball) return 'Total Points';
+  if (sportId === SPORT.soccer) return 'Total Goals';
+  return 'Total Maps';
+};
+
+const STAGES = [
+  'Regular Season',
+  'Group Stage',
+  'Playoffs',
+  'Quarter-Final',
+  'Semi-Final',
+];
+
+/** Deterministic credit amount in [min, max), formatted for the Decimal column. */
+const creditsFor = (seed: string, min: number, max: number) =>
+  (min + unitFromSeed(seed) * (max - min)).toFixed(2);
+
+const intFor = (seed: string, min: number, max: number) =>
+  min + Math.floor(unitFromSeed(seed) * (max - min));
+
+function generatedEvent(sportId: string, index: number): EventInput {
+  const pool = teamIdsForSport(sportId);
+  if (pool.length < 2) {
+    throw new Error(`Sport ${sportId} needs at least two teams to schedule`);
+  }
+
+  // Offset stays within [1, pool.length - 1] so the two sides are never equal
+  // and pairings keep rotating rather than repeating the same fixture.
+  const offset = 1 + (Math.floor(index / pool.length) % (pool.length - 1));
+  const teamAId = pool[index % pool.length];
+  const teamBId = pool[(index + offset) % pool.length];
+
+  const slug = sportId.replace('sport-', '');
+  const id = `event-${slug}-${String(index + 1).padStart(2, '0')}`;
+  const teamAName = teamNameById.get(teamAId) ?? 'Team A';
+  const teamBName = teamNameById.get(teamBId) ?? 'Team B';
+
+  // Every fourth fixture is finished, so both statuses page in volume.
+  const isSettled = index % 4 === 0;
+  const totalsName = totalsMarketName(sportId);
+  const line = sportId === SPORT.basketball ? '218.5' : '2.5';
+
+  if (isSettled) {
+    const teamAWins = unitFromSeed(`${id}-winner`) < 0.5;
+    const winnerTeamId = teamAWins ? teamAId : teamBId;
+    const highScore = intFor(`${id}-hi`, 2, 4);
+    const lowScore = intFor(`${id}-lo`, 0, 2);
+
+    return {
+      id,
+      title: `${teamAName} vs ${teamBName}`,
+      stage: STAGES[index % STAGES.length],
+      teamAId,
+      teamBId,
+      status: 'settled',
+      teamAScore: teamAWins ? highScore : lowScore,
+      teamBScore: teamAWins ? lowScore : highScore,
+      winnerTeamId,
+      markets: [
+        market('Match Winner', 'settled', [
+          opt(teamAName, creditsFor(`${id}-a`, 4_000, 60_000), teamAWins),
+          opt(teamBName, creditsFor(`${id}-b`, 4_000, 60_000), !teamAWins),
+        ]),
+        market(totalsName, 'settled', [
+          opt(`Over ${line}`, creditsFor(`${id}-o`, 3_000, 40_000), teamAWins),
+          opt(`Under ${line}`, creditsFor(`${id}-u`, 3_000, 40_000), !teamAWins),
+        ]),
+      ],
+    };
+  }
+
+  return {
+    id,
+    title: `${teamAName} vs ${teamBName}`,
+    stage: STAGES[index % STAGES.length],
+    teamAId,
+    teamBId,
+    status: 'upcoming',
+    markets: [
+      market('Match Winner', 'open', [
+        opt(teamAName, creditsFor(`${id}-a`, 1_000, 45_000)),
+        opt(teamBName, creditsFor(`${id}-b`, 1_000, 45_000)),
+      ]),
+      market(totalsName, 'open', [
+        opt(`Over ${line}`, creditsFor(`${id}-o`, 800, 30_000)),
+        opt(`Under ${line}`, creditsFor(`${id}-u`, 800, 30_000)),
+      ]),
+    ],
+  };
+}
+
+/** Tops each sport up to EVENTS_PER_SPORT, spread across its tournaments. */
+function addBulkEvents() {
+  for (const sportId of Object.values(SPORT)) {
+    const sportTournaments = tournaments.filter((t) => t.sportId === sportId);
+    if (sportTournaments.length === 0) continue;
+
+    const existing = sportTournaments.reduce(
+      (count, t) => count + t.events.length,
+      0,
+    );
+
+    for (let index = existing; index < EVENTS_PER_SPORT; index++) {
+      const target = sportTournaments[index % sportTournaments.length];
+      target.events.push(generatedEvent(sportId, index));
+    }
+  }
+}
+
+addBulkEvents();
 
 async function main() {
   // Identifiers must be double-quoted — tables are PascalCase.
@@ -672,7 +814,10 @@ async function main() {
             teamAId: e.teamAId,
             teamBId: e.teamBId,
             status: e.status,
-            startDate: e.startDate ?? null,
+            startDate:
+              e.status === 'upcoming'
+                ? upcomingStart(e.id)
+                : settledStart(e.id),
             teamAScore: e.teamAScore ?? 0,
             teamBScore: e.teamBScore ?? 0,
             winnerTeamId: e.winnerTeamId ?? null,

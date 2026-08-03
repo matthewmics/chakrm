@@ -22,7 +22,14 @@ export class EventsService {
       this.prisma.event.findMany({
         where,
         include: eventListInclude,
+        // Status first — live, then upcoming, then settled/cancelled. This
+        // relies on EventStatus being declared in that priority order in
+        // schema.prisma: Postgres native enums sort by declaration order, not
+        // alphabetically, so `status: 'asc'` alone produces the grouping.
+        // Within a status, soonest start date leads (the live match running
+        // longest, or the upcoming match starting next, is most relevant).
         orderBy: [
+          { status: 'asc' },
           { startDate: { sort: 'asc', nulls: 'last' } },
           { createdAt: 'desc' },
         ],
