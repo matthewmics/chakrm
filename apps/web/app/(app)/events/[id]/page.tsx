@@ -2,17 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronLeft, Users } from "lucide-react";
 
-import { Credits } from "@/components/chakrm/credits";
 import { EventStatusBadge } from "@/components/chakrm/event-status-badge";
+import { MarketCard } from "@/components/chakrm/market-card";
 import { MatchChat } from "@/components/chakrm/match-chat";
-import { PoolBar } from "@/components/chakrm/pool-bar";
 import { PredictionSlip } from "@/components/chakrm/prediction-slip";
 import { TeamBadge } from "@/components/chakrm/team-badge";
 import { Card } from "@/components/ui/card";
 import { formatCredits } from "@/lib/format";
 import { SPORT_ICONS } from "@/lib/icons";
 import { EVENTS, getEventById } from "@/lib/mock-data";
-import { poolSplit } from "@/lib/predictions";
 import { cn } from "@/lib/utils";
 
 export function generateStaticParams() {
@@ -30,7 +28,6 @@ export default async function EventDetailPage({
 
   const SportIcon = SPORT_ICONS[event.sport];
   const live = event.status === "live";
-  const { poolA, poolB } = poolSplit(event);
 
   return (
     <div className="flex flex-col gap-5">
@@ -89,53 +86,17 @@ export default async function EventDetailPage({
       </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="flex flex-col gap-4 lg:col-span-2">
-          <Card>
-            <h3 className="px-(--card-spacing) font-heading text-sm font-semibold">
-              Prediction pool
-            </h3>
-            <div className="px-(--card-spacing)">
-              <PoolBar
-                a={event.a}
-                b={event.b}
-                retA={event.retA}
-                retB={event.retB}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 px-(--card-spacing)">
-              {[
-                { name: event.a, pool: poolA },
-                { name: event.b, pool: poolB },
-              ].map((entry) => (
-                <div
-                  key={entry.name}
-                  className="flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2.5"
-                >
-                  <TeamBadge name={entry.name} size={26} />
-                  <div className="min-w-0">
-                    <div className="truncate text-[11px] text-faint">
-                      {entry.name}
-                    </div>
-                    <Credits amount={entry.pool} className="text-sm font-semibold" />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mx-(--card-spacing) flex items-center justify-between border-t border-subtle pt-4">
-              <span className="text-xs text-faint">Total pool</span>
-              <span className="text-sm font-semibold">
-                <Credits amount={event.pool} /> Credits
-              </span>
-            </div>
-          </Card>
-
-          <MatchChat event={event} />
+        <div className="flex flex-col gap-4  lg:col-span-2">
+          <PredictionSlip markets={event.markets} />
+          <div className="flex flex-col gap-3">
+            {event.markets.map((market) => (
+              <MarketCard key={market.id} market={market} />
+            ))}
+          </div>
         </div>
 
         <div className="flex flex-col gap-4">
-          <PredictionSlip event={event} />
+          <MatchChat event={event} />
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import type { SportEvent } from "./types";
+import type { Market, MarketOption, MarketStatus, SportEvent } from "./types";
 
 /** Platform cut taken off the pool before rewards are distributed. */
 export const FEE_RATE = 0.05;
@@ -35,6 +35,43 @@ export function estimatePayout(
   const sidePoolAfter = (side === "a" ? poolA : poolB) + amt;
   const distributable = (poolA + poolB + amt) * (1 - FEE_RATE);
   const payout = (amt / sidePoolAfter) * distributable;
+
+  return { payout, profit: payout - amt };
+}
+
+/** Credits committed across every option of a market. */
+export function marketPool(market: Market): number {
+  return market.options.reduce((sum, option) => sum + option.totalCredits, 0);
+}
+
+/** An option's share of its market's pool, as a percentage. */
+export function optionShare(option: MarketOption, market: Market): number {
+  const pool = marketPool(market);
+  if (!pool) return 0;
+  return (option.totalCredits / pool) * 100;
+}
+
+/** Only `open` and `live` markets accept new predictions. */
+export function isMarketPredictable(status: MarketStatus): boolean {
+  return status === "open" || status === "live";
+}
+
+/**
+ * Pari-mutuel payout generalised to a market with any number of options: the
+ * stake's share of the chosen option's pool after it joins, applied to the
+ * whole market pool less the fee.
+ */
+export function estimateOptionPayout(
+  amount: number | string,
+  option: MarketOption | null,
+  market: Market | null,
+) {
+  const amt = Number(amount) || 0;
+  if (!option || !market || amt <= 0) return { payout: 0, profit: 0 };
+
+  const optionPoolAfter = option.totalCredits + amt;
+  const distributable = (marketPool(market) + amt) * (1 - FEE_RATE);
+  const payout = (amt / optionPoolAfter) * distributable;
 
   return { payout, profit: payout - amt };
 }

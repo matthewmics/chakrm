@@ -9,6 +9,34 @@ export type Sport =
 
 export type EventStatus = "open" | "closing" | "live";
 
+/**
+ * Mirrors the API's `MarketStatus` enum. Status is entirely admin-driven —
+ * markets on the same event can sit in different states independently.
+ */
+export type MarketStatus =
+  | "upcoming"
+  | "open"
+  | "live"
+  | "suspended"
+  | "settled"
+  | "cancelled";
+
+export type MarketOption = {
+  id: string;
+  name: string;
+  /** Credits committed to this option. Implied odds are always derived live. */
+  totalCredits: number;
+  isWinningOption?: boolean;
+};
+
+/** A single bet type on an event, e.g. "Match Winner" or "Total Points". */
+export type Market = {
+  id: string;
+  name: string;
+  status: MarketStatus;
+  options: MarketOption[];
+};
+
 export type SportEvent = {
   id: number;
   sport: Sport;
@@ -23,6 +51,8 @@ export type SportEvent = {
   retA: number;
   retB: number;
   status: EventStatus;
+  /** Bet types offered on this event, e.g. Match Winner, Total Points. */
+  markets: Market[];
 };
 
 export type LeaderboardEntry = {

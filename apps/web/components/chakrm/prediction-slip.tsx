@@ -6,23 +6,37 @@ import { CircleCheckBig } from "lucide-react";
 import { TeamBadge } from "@/components/chakrm/team-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CURRENT_USER } from "@/lib/mock-data";
-import { decimalOdds, estimatePayout, poolSplit } from "@/lib/predictions";
-import type { SportEvent } from "@/lib/types";
+import { CURRENT_USER, TEAM_COLORS } from "@/lib/mock-data";
+import {
+  decimalOdds,
+  estimateOptionPayout,
+  isMarketPredictable,
+  optionShare,
+} from "@/lib/predictions";
+import type { Market, MarketOption } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const QUICK_AMOUNTS = [50, 100, 250, 500];
 
-export function PredictionSlip({ event }: { event: SportEvent }) {
-  const { poolA, poolB } = poolSplit(event);
+export function PredictionSlip({ markets }: { markets: Market[] }) {
+  const predictable = markets.filter((market) =>
+    isMarketPredictable(market.status),
+  );
 
-  const [side, setSide] = React.useState<"a" | "b" | null>(null);
+  const [marketId, setMarketId] = React.useState<string | null>(
+    predictable[0]?.id ?? null,
+  );
+  const [optionId, setOptionId] = React.useState<string | null>(null);
   const [amount, setAmount] = React.useState<string>("100");
   const [confirmed, setConfirmed] = React.useState(false);
 
-  const { payout, profit } = estimatePayout(amount, side, poolA, poolB);
+  const market = predictable.find((entry) => entry.id === marketId) ?? null;
+  const option =
+    market?.options.find((entry) => entry.id === optionId) ?? null;
+
+  const { payout, profit } = estimateOptionPayout(amount, option, market);
   const stake = Number(amount) || 0;
-  const ready = side !== null && stake > 0;
+  const ready = market !== null && option !== null && stake > 0;
 
   // Any change to the slip invalidates a previous confirmation.
   const update = (next: () => void) => {
@@ -30,10 +44,24 @@ export function PredictionSlip({ event }: { event: SportEvent }) {
     setConfirmed(false);
   };
 
-  const sides = [
-    { key: "a" as const, name: event.a, share: event.retA },
-    { key: "b" as const, name: event.b, share: event.retB },
-  ];
+  const selectMarket = (id: string) =>
+    update(() => {
+      setMarketId(id);
+      setOptionId(null);
+    });
+
+  if (predictable.length === 0) {
+    return (
+      <Card className="sticky top-4 items-center gap-1.5 py-10 text-center">
+        <span className="text-sm font-medium">
+          No markets open for predictions
+        </span>
+        <span className="text-xs text-faint">
+          Check back once an admin opens a market on this event.
+        </span>
+      </Card>
+    );
+  }
 
   return (
     <Card className="sticky top-4 gap-4">
@@ -41,26 +69,45 @@ export function PredictionSlip({ event }: { event: SportEvent }) {
         Place a prediction
       </h3>
 
-      <div className="grid grid-cols-2 gap-2 px-(--card-spacing)">
-        {sides.map((option) => (
-          <button
-            key={option.key}
-            onClick={() => update(() => setSide(option.key))}
-            className={cn(
-              "flex flex-col items-center gap-2 rounded-xl border px-2 py-3 transition-colors",
-              side === option.key
-                ? "border-primary bg-primary-soft"
-                : "border-border bg-card hover:bg-accent",
-            )}
-          >
-            <TeamBadge name={option.name} size={32} />
-            <span className="text-xs font-medium">{option.name}</span>
-            <span className="rounded-sm bg-primary-soft px-1.5 py-0.5 font-mono text-xs font-semibold text-primary tabular-nums">
-              x{decimalOdds(option.share)}
-            </span>
-          </button>
-        ))}
-      </div>
+      {predictable.length > 1 && (
+        <div className="flex flex-wrap gap-1.5 px-(--card-spacing)">
+          {predictable.map((entry) => (
+            <button
+              key={entry.id}
+              onClick={() => selectMarket(entry.id)}
+              className={cn(
+                "rounded-lg border px-2.5 py-1.5 text-xs font-medium transition-colors",
+                entry.id === marketId
+                  ? "border-primary-line bg-primary-soft text-primary"
+                  : "border-border bg-card text-muted-foreground hover:bg-accent",
+              )}
+            >
+              {entry.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {market && (
+        <div
+          className={cn(
+            "grid gap-2 px-(--card-spacing)",
+            market.options.length === 2 ? "grid-cols-2" : "grid-cols-1",
+          )}
+        >
+          {market.options.map((marketOption) => (
+            <OptionButton
+              key={marketOption.id}
+              option={marketOption}
+              market={market}
+              selected={optionId === marketOption.id}
+              onSelect={() =>
+                update(() => setOptionId(marketOption.id))
+              }
+            />
+          ))}
+        </div>
+      )}
 
       <div className="flex flex-col gap-2 px-(--card-spacing)">
         <div className="flex items-center justify-between rounded-lg border border-border bg-card px-3 py-2.5">
@@ -118,7 +165,7 @@ export function PredictionSlip({ event }: { event: SportEvent }) {
         </div>
         <p className="mt-1 text-[11px] text-faint">
           Estimated payout updates as more Credits are committed before this
-          pool closes.
+          market closes.
         </p>
       </div>
 
@@ -140,5 +187,38 @@ export function PredictionSlip({ event }: { event: SportEvent }) {
         )}
       </div>
     </Card>
+  );
+}
+
+function OptionButton({
+  option,
+  market,
+  selected,
+  onSelect,
+}: {
+  option: MarketOption;
+  market: Market;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const hasCrest = option.name in TEAM_COLORS;
+  const share = optionShare(option, market);
+
+  return (
+    <button
+      onClick={onSelect}
+      className={cn(
+        "flex flex-col items-center gap-2 rounded-xl border px-2 py-3 transition-colors",
+        selected
+          ? "border-primary bg-primary-soft"
+          : "border-border bg-card hover:bg-accent",
+      )}
+    >
+      {hasCrest && <TeamBadge name={option.name} size={32} />}
+      <span className="text-xs font-medium">{option.name}</span>
+      <span className="rounded-sm bg-primary-soft px-1.5 py-0.5 font-mono text-xs font-semibold text-primary tabular-nums">
+        x{decimalOdds(share)}
+      </span>
+    </button>
   );
 }

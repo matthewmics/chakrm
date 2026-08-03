@@ -86,6 +86,10 @@ export function EventCard({ event, compact = false }: EventCardProps) {
           <span className="flex items-center gap-1.5 text-xs text-faint">
             <Users className="size-3" />
             {formatCredits(event.participants)} predicting
+            <span className="text-faint">
+              · {event.markets.length}{" "}
+              {event.markets.length === 1 ? "market" : "markets"}
+            </span>
           </span>
           {!compact && (
             <span

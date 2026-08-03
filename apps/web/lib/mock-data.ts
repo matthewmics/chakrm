@@ -61,6 +61,36 @@ export const EVENTS: SportEvent[] = [
     retA: 61,
     retB: 39,
     status: "open",
+    markets: [
+      {
+        id: "1-winner",
+        name: "Match Winner",
+        status: "open",
+        options: [
+          { id: "1-winner-a", name: "Celtics", totalCredits: 29400 },
+          { id: "1-winner-b", name: "Nuggets", totalCredits: 18800 },
+        ],
+      },
+      {
+        id: "1-total-points",
+        name: "Total Points (O/U 215.5)",
+        status: "open",
+        options: [
+          { id: "1-total-points-over", name: "Over 215.5", totalCredits: 12500 },
+          { id: "1-total-points-under", name: "Under 215.5", totalCredits: 9800 },
+        ],
+      },
+      {
+        id: "1-margin",
+        name: "Winning Margin",
+        status: "upcoming",
+        options: [
+          { id: "1-margin-1", name: "1-5 pts", totalCredits: 0 },
+          { id: "1-margin-2", name: "6-10 pts", totalCredits: 0 },
+          { id: "1-margin-3", name: "11+ pts", totalCredits: 0 },
+        ],
+      },
+    ],
   },
   {
     id: 2,
@@ -75,6 +105,36 @@ export const EVENTS: SportEvent[] = [
     retA: 47,
     retB: 53,
     status: "open",
+    markets: [
+      {
+        id: "2-winner",
+        name: "Match Winner",
+        status: "open",
+        options: [
+          { id: "2-winner-a", name: "Arsenal", totalCredits: 38000 },
+          { id: "2-winner-draw", name: "Draw", totalCredits: 21000 },
+          { id: "2-winner-b", name: "Man City", totalCredits: 32500 },
+        ],
+      },
+      {
+        id: "2-btts",
+        name: "Both Teams to Score",
+        status: "open",
+        options: [
+          { id: "2-btts-yes", name: "Yes", totalCredits: 26000 },
+          { id: "2-btts-no", name: "No", totalCredits: 19000 },
+        ],
+      },
+      {
+        id: "2-total-goals",
+        name: "Total Goals (O/U 2.5)",
+        status: "suspended",
+        options: [
+          { id: "2-total-goals-over", name: "Over 2.5", totalCredits: 24000 },
+          { id: "2-total-goals-under", name: "Under 2.5", totalCredits: 21000 },
+        ],
+      },
+    ],
   },
   {
     id: 3,
@@ -89,6 +149,35 @@ export const EVENTS: SportEvent[] = [
     retA: 55,
     retB: 45,
     status: "closing",
+    markets: [
+      {
+        id: "3-winner",
+        name: "Match Winner",
+        status: "open",
+        options: [
+          { id: "3-winner-a", name: "Sentinels", totalCredits: 12500 },
+          { id: "3-winner-b", name: "Fnatic", totalCredits: 10250 },
+        ],
+      },
+      {
+        id: "3-total-maps",
+        name: "Total Maps (O/U 2.5)",
+        status: "open",
+        options: [
+          { id: "3-total-maps-over", name: "Over 2.5", totalCredits: 6200 },
+          { id: "3-total-maps-under", name: "Under 2.5", totalCredits: 4100 },
+        ],
+      },
+      {
+        id: "3-first-blood",
+        name: "First Blood, Map 1",
+        status: "suspended",
+        options: [
+          { id: "3-first-blood-a", name: "Sentinels", totalCredits: 3400 },
+          { id: "3-first-blood-b", name: "Fnatic", totalCredits: 2900 },
+        ],
+      },
+    ],
   },
   {
     id: 4,
@@ -103,6 +192,35 @@ export const EVENTS: SportEvent[] = [
     retA: 58,
     retB: 42,
     status: "live",
+    markets: [
+      {
+        id: "4-winner",
+        name: "Match Winner",
+        status: "live",
+        options: [
+          { id: "4-winner-a", name: "Alcaraz", totalCredits: 36800 },
+          { id: "4-winner-b", name: "Sinner", totalCredits: 26600 },
+        ],
+      },
+      {
+        id: "4-total-sets",
+        name: "Total Sets (O/U 3.5)",
+        status: "live",
+        options: [
+          { id: "4-total-sets-over", name: "Over 3.5", totalCredits: 14200 },
+          { id: "4-total-sets-under", name: "Under 3.5", totalCredits: 9800 },
+        ],
+      },
+      {
+        id: "4-first-set",
+        name: "First Set Winner",
+        status: "settled",
+        options: [
+          { id: "4-first-set-a", name: "Alcaraz", totalCredits: 8100, isWinningOption: true },
+          { id: "4-first-set-b", name: "Sinner", totalCredits: 6300 },
+        ],
+      },
+    ],
   },
   {
     id: 5,
@@ -117,6 +235,35 @@ export const EVENTS: SportEvent[] = [
     retA: 52,
     retB: 48,
     status: "open",
+    markets: [
+      {
+        id: "5-winner",
+        name: "Match Winner",
+        status: "open",
+        options: [
+          { id: "5-winner-a", name: "49ers", totalCredits: 67000 },
+          { id: "5-winner-b", name: "Cowboys", totalCredits: 61900 },
+        ],
+      },
+      {
+        id: "5-total-points",
+        name: "Total Points (O/U 47.5)",
+        status: "open",
+        options: [
+          { id: "5-total-points-over", name: "Over 47.5", totalCredits: 31000 },
+          { id: "5-total-points-under", name: "Under 47.5", totalCredits: 27500 },
+        ],
+      },
+      {
+        id: "5-race-to-10",
+        name: "Race to 10 Points",
+        status: "upcoming",
+        options: [
+          { id: "5-race-to-10-a", name: "49ers", totalCredits: 0 },
+          { id: "5-race-to-10-b", name: "Cowboys", totalCredits: 0 },
+        ],
+      },
+    ],
   },
   {
     id: 6,
@@ -131,6 +278,26 @@ export const EVENTS: SportEvent[] = [
     retA: 44,
     retB: 56,
     status: "open",
+    markets: [
+      {
+        id: "6-winner",
+        name: "Match Winner",
+        status: "open",
+        options: [
+          { id: "6-winner-a", name: "Lakers", totalCredits: 15700 },
+          { id: "6-winner-b", name: "Suns", totalCredits: 19900 },
+        ],
+      },
+      {
+        id: "6-total-points",
+        name: "Total Points (O/U 224.5)",
+        status: "open",
+        options: [
+          { id: "6-total-points-over", name: "Over 224.5", totalCredits: 9200 },
+          { id: "6-total-points-under", name: "Under 224.5", totalCredits: 8600 },
+        ],
+      },
+    ],
   },
 ];
 
