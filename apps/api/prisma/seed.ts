@@ -141,7 +141,6 @@ interface EventInput {
   teamAId: string;
   teamBId: string;
   status: EventStatusV;
-  adminOverrideLive?: boolean;
   startDate?: Date | null;
   teamAScore?: number;
   teamBScore?: number;
@@ -464,7 +463,6 @@ const tournaments: TournamentInput[] = [
         teamAId: TEAM.liquid,
         teamBId: TEAM.tundra,
         status: 'live',
-        adminOverrideLive: true,
         startDate: minutesAgo(90),
         teamAScore: 1,
         teamBScore: 0,
@@ -674,7 +672,6 @@ async function main() {
             teamAId: e.teamAId,
             teamBId: e.teamBId,
             status: e.status,
-            adminOverrideLive: e.adminOverrideLive ?? false,
             startDate: e.startDate ?? null,
             teamAScore: e.teamAScore ?? 0,
             teamBScore: e.teamBScore ?? 0,

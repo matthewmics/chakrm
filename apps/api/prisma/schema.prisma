@@ -107,7 +107,6 @@ model Event {
   teamAId           String
   teamBId           String
   status            EventStatus @default(upcoming)
-  adminOverrideLive Boolean     @default(false)
   startDate         DateTime?
   teamAScore        Int         @default(0)
   teamBScore        Int         @default(0)

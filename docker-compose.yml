@@ -37,6 +37,9 @@ services:
       PORT: 3000
       # Bind mounts do not forward inotify events, so webpack polls instead.
       WEBPACK_POLL: 1000
+      # Comma-separated browser origins allowed to call the API. Empty falls
+      # back to the local dev list baked into src/main.ts.
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
       DATABASE_URL: postgresql://${POSTGRES_USER:-chakrm}:${POSTGRES_PASSWORD:-chakrm}@db:5432/${POSTGRES_DB:-chakrm}?schema=public
     depends_on:
       db:

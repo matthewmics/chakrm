@@ -1,7 +1,6 @@
 ## Prompt
 When i say "give me suggestions" dont make any edits
 
-
 ## Product
 
 **This is not a betting/gambling platform — it is a prediction system.** Users predict outcomes of sporting/esports events using **virtual credits**, not real money. Results feed a **leaderboard/rankings** system, not cash payouts. There is no house rake/commission anywhere in the domain model — the credit pool for a market redistributes entirely to whoever predicted the winning option.
@@ -43,7 +42,8 @@ The prediction domain shape (`apps/api/prisma/schema.prisma` is the source of tr
 
 - **`Sport` is normalized, not a string.** `isEsport` lives on `Sport`, not on `Tournament` — a given sport (e.g. Dota 2) can't be esports in one tournament and not another, since it's defined once per sport.
 - **`Team` is sport-agnostic.** A team has no `sportId` of its own — orgs like "Team Spirit" field rosters across multiple games (Dota 2 and CS2 in the seed data). Which sports a team competes in is tracked via the `TeamSport` pivot table, independent of whether it's actually been scheduled into any `Event` yet.
-- **`Market` status is entirely admin-driven — no scheduler, cron, or auto-lock.** `Market.startDate` is purely informational (drives a UI countdown) and never automatically changes `Market.status`. Multiple markets on the same event can be in different states (`upcoming`/`open`/`live`/`suspended`/`settled`/`cancelled`) purely because an admin set them that way — there's no built-in rule sequencing one market's availability against another or against the parent `Event`'s status. Don't add auto-locking logic without an explicit product decision to do so.
+- **Status is entirely admin-driven — no scheduler, cron, or auto-lock. This applies to `Event.status` and `Market.status` alike.** `startDate` on both models is purely informational (drives a UI countdown) and never automatically changes a status. Multiple markets on the same event can be in different states (`upcoming`/`open`/`live`/`suspended`/`settled`/`cancelled`) purely because an admin set them that way — there's no built-in rule sequencing one market's availability against another or against the parent `Event`'s status. Don't add auto-locking logic without an explicit product decision to do so.
+- **Corollary: no "override" fields.** Because status is set directly rather than derived, there is nothing to override. `Event.adminOverrideLive` existed for exactly this reason and was dropped (migration `20260803123018_drop_event_admin_override_live`) — it was never read by application code and merely duplicated `status: 'live'`. Don't reintroduce a flag of this shape; if an admin wants an event live, they set `status`.
 - **No rake/commission anywhere** — ties to the Product framing above. `MarketOption.totalCredits` is the only stored pool value; implied payout ratios are always computed live (`pool ÷ option.totalCredits`), never cached or frozen on the option itself.
 - For a concrete example of how all of this composes together (a full tournament → event → market → option tree, including a market opened before its sibling has even started), read `apps/api/prisma/seed.ts`.
 

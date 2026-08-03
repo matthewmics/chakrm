@@ -1,9 +1,12 @@
 {
-    "tailwindCSS.classAttributes": [
-    "class",
-    "className"
-  ],
+  "tailwindCSS.classAttributes": ["class", "className"],
   "tailwindCSS.experimental.classRegex": [],
   "tailwindCSS.lint.cssConflict": "ignore",
-  "tailwindCSS.suggestions": false
+  "tailwindCSS.suggestions": false,
+
+  // Type-check with the TypeScript the build uses (5.9.3, shared by api/web/
+  // admin) rather than the editor's bundled version, which is currently 6.0.3
+  // and applies different defaults.
+  "js/ts.tsdk.path": "apps/api/node_modules/typescript/lib",
+  "js/ts.tsdk.promptToUseWorkspaceVersion": true
 }
