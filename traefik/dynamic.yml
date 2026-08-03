@@ -1,0 +1,28 @@
+# Routes for apps/web and apps/admin, which run on the host via `pnpm dev`
+# (not in docker-compose) and so can't be picked up by Traefik's Docker
+# provider. host.docker.internal resolves to the host from inside the
+# Traefik container on Docker Desktop (Windows/Mac) without extra config.
+http:
+  routers:
+    web:
+      rule: "Host(`chakrm.local`)"
+      entryPoints:
+        - web
+      service: web
+
+    admin:
+      rule: "Host(`admin.chakrm.local`)"
+      entryPoints:
+        - web
+      service: admin
+
+  services:
+    web:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3000"
+
+    admin:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3002"
