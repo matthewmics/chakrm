@@ -1,3 +1,7 @@
+## Prompt
+When i say "give me suggestions" dont make any edits
+
+
 ## Product
 
 **This is not a betting/gambling platform — it is a prediction system.** Users predict outcomes of sporting/esports events using **virtual credits**, not real money. Results feed a **leaderboard/rankings** system, not cash payouts. There is no house rake/commission anywhere in the domain model — the credit pool for a market redistributes entirely to whoever predicted the winning option.
