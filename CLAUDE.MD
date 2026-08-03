@@ -1,4 +1,5 @@
 ## Prompt
+
 When i say "give me suggestions" dont make any edits
 
 ## Product
@@ -61,3 +62,5 @@ When working on this project:
 - Use local `pnpm` commands for anything under `apps/web` and `apps/admin`.
 - Assume API-side services (e.g. NestJS, database, Redis) communicate over the Docker network.
 - If you need to inspect API logs or debug, use Docker Compose logs and container shells.
+
+Avoid checking the _prototypes folder in the root unless I said so. This is just UI prototype and we used this as reference to create our layout for admin and the consumer app.
