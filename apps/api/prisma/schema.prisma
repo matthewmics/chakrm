@@ -20,3 +20,141 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+enum EventStatus {
+  upcoming
+  live
+  settled
+  cancelled
+}
+
+enum MarketStatus {
+  upcoming
+  open
+  live
+  suspended
+  settled
+  cancelled
+}
+
+enum MarketOptionStatus {
+  active
+  suspended
+  hidden
+}
+
+model Sport {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  slug      String    @unique
+  isEsport  Boolean   @default(false)
+  iconUrl   String?
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  tournaments Tournament[]
+  teamSports  TeamSport[]
+}
+
+model Tournament {
+  id        String    @id @default(uuid())
+  sportId   String
+  name      String
+  season    String?
+  logoUrl   String?
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  sport  Sport   @relation(fields: [sportId], references: [id], onDelete: Restrict)
+  events Event[]
+
+  @@index([sportId])
+}
+
+model Team {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  logoUrl   String?
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  eventsAsTeamA Event[] @relation("EventTeamA")
+  eventsAsTeamB Event[] @relation("EventTeamB")
+  eventsWon     Event[] @relation("EventWinner")
+  teamSports    TeamSport[]
+}
+
+model TeamSport {
+  id        String   @id @default(uuid())
+  teamId    String
+  sportId   String
+  createdAt DateTime @default(now())
+
+  team  Team  @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  sport Sport @relation(fields: [sportId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, sportId])
+}
+
+model Event {
+  id                String      @id @default(uuid())
+  tournamentId      String
+  title             String
+  stage             String?
+  teamAId           String
+  teamBId           String
+  status            EventStatus @default(upcoming)
+  adminOverrideLive Boolean     @default(false)
+  startDate         DateTime?
+  teamAScore        Int         @default(0)
+  teamBScore        Int         @default(0)
+  winnerTeamId      String?
+  deletedAt         DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  teamA      Team       @relation("EventTeamA", fields: [teamAId], references: [id], onDelete: Restrict)
+  teamB      Team       @relation("EventTeamB", fields: [teamBId], references: [id], onDelete: Restrict)
+  winnerTeam Team?      @relation("EventWinner", fields: [winnerTeamId], references: [id], onDelete: SetNull)
+
+  markets Market[]
+
+  @@index([tournamentId])
+  @@index([status])
+  @@index([teamAId, teamBId])
+}
+
+model Market {
+  id        String       @id @default(uuid())
+  eventId   String
+  name      String
+  status    MarketStatus @default(upcoming)
+  startDate DateTime?
+  deletedAt DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  event   Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  options MarketOption[]
+
+  @@index([eventId])
+}
+
+model MarketOption {
+  id              String             @id @default(uuid())
+  marketId        String
+  name            String
+  totalCredits    Decimal            @default(0) @db.Decimal(18, 2)
+  isWinningOption Boolean            @default(false)
+  status          MarketOptionStatus @default(active)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  market Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@index([marketId])
+}
