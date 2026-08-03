@@ -1,20 +1,29 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, Users } from "lucide-react";
+import { ChevronLeft, Layers } from "lucide-react";
 
-import { EventStatusBadge } from "@/components/chakrm/event-status-badge";
-import { MarketCard } from "@/components/chakrm/market-card";
+import { ApiEventStatusBadge } from "@/components/chakrm/api-event-status-badge";
+import { EventMarkets } from "@/components/chakrm/event-markets";
+import { EventStartTime } from "@/components/chakrm/event-start-time";
 import { MatchChat } from "@/components/chakrm/match-chat";
-import { PredictionSlip } from "@/components/chakrm/prediction-slip";
 import { TeamBadge } from "@/components/chakrm/team-badge";
 import { Card } from "@/components/ui/card";
+import { ApiError } from "@/lib/api/client";
+import { getEvent } from "@/lib/api/events";
+import type { EventDetailResponse } from "@/lib/api/types";
 import { formatCredits } from "@/lib/format";
-import { SPORT_ICONS } from "@/lib/icons";
-import { EVENTS, getEventById } from "@/lib/mock-data";
-import { cn } from "@/lib/utils";
+import { DEFAULT_SPORT_ICON, SPORT_ICONS_BY_SLUG } from "@/lib/icons";
 
-export function generateStaticParams() {
-  return EVENTS.map((event) => ({ id: String(event.id) }));
+// No generateStaticParams: events are database rows that change under admin
+// action, so this route is rendered per request rather than prerendered.
+
+async function loadEvent(id: string): Promise<EventDetailResponse> {
+  try {
+    return await getEvent(id);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) notFound();
+    throw error;
+  }
 }
 
 export default async function EventDetailPage({
@@ -23,11 +32,12 @@ export default async function EventDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const event = getEventById(id);
-  if (!event) notFound();
+  const event = await loadEvent(id);
 
-  const SportIcon = SPORT_ICONS[event.sport];
+  const SportIcon =
+    SPORT_ICONS_BY_SLUG[event.tournament.sport.slug] ?? DEFAULT_SPORT_ICON;
   const live = event.status === "live";
+  const showScores = live || event.status === "settled";
 
   return (
     <div className="flex flex-col gap-5">
@@ -41,62 +51,58 @@ export default async function EventDetailPage({
 
       <Card className="[--card-spacing:--spacing(6)] md:[--card-spacing:--spacing(8)]">
         <div className="flex items-center justify-between px-(--card-spacing)">
-          <div className="flex items-center gap-2">
-            <SportIcon className="size-3.5 text-faint" />
-            <span className="text-xs font-medium tracking-wide text-faint uppercase">
-              {event.league}
+          <div className="flex min-w-0 items-center gap-2">
+            <SportIcon className="size-3.5 shrink-0 text-faint" />
+            <span className="truncate text-xs font-medium tracking-wide text-faint uppercase">
+              {event.tournament.name}
+              {event.stage && ` · ${event.stage}`}
             </span>
           </div>
-          <EventStatusBadge status={event.status} />
+          <ApiEventStatusBadge status={event.status} />
         </div>
 
         <div className="flex items-center justify-center gap-6 px-(--card-spacing) md:gap-12">
           <div className="flex flex-col items-center gap-2">
-            <TeamBadge name={event.a} size={64} />
-            <span className="text-base font-semibold">{event.a}</span>
+            <TeamBadge name={event.teamA.name} size={64} />
+            <span className="text-base font-semibold">{event.teamA.name}</span>
           </div>
           <div className="flex flex-col items-center gap-2">
-            <span
-              className={cn(
-                "text-xs font-semibold",
-                event.status === "closing" ? "text-gold" : "text-faint",
-              )}
-            >
-              {live ? "LIVE" : "VS"}
-            </span>
-            <span className="text-sm text-muted-foreground">
-              {live ? "In progress" : event.time}
-            </span>
-            {!live && (
-              <span className="text-xs text-faint">
-                Closes in {event.closesIn}
+            {showScores ? (
+              <span className="font-mono text-2xl font-bold tabular-nums">
+                {event.teamAScore}&ndash;{event.teamBScore}
               </span>
+            ) : (
+              <span className="text-xs font-semibold text-faint">VS</span>
             )}
+            <span className="text-sm text-muted-foreground">
+              {live ? (
+                "In progress"
+              ) : (
+                <EventStartTime startDate={event.startDate} />
+              )}
+            </span>
           </div>
           <div className="flex flex-col items-center gap-2">
-            <TeamBadge name={event.b} size={64} />
-            <span className="text-base font-semibold">{event.b}</span>
+            <TeamBadge name={event.teamB.name} size={64} />
+            <span className="text-base font-semibold">{event.teamB.name}</span>
           </div>
         </div>
 
         <div className="flex items-center justify-center gap-1.5 px-(--card-spacing) text-xs text-faint">
-          <Users className="size-3" />
-          {formatCredits(event.participants)} predicting this match
+          <Layers className="size-3" />
+          {formatCredits(event.totalPool)} Credits across {event.marketCount}{" "}
+          {event.marketCount === 1 ? "market" : "markets"}
         </div>
       </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="flex flex-col gap-4  lg:col-span-2">
-          <PredictionSlip markets={event.markets} />
-          <div className="flex flex-col gap-3">
-            {event.markets.map((market) => (
-              <MarketCard key={market.id} market={market} />
-            ))}
-          </div>
+        <div className="flex flex-col gap-4 lg:col-span-2">
+          {/* Markets poll for pool changes, so they live in a client boundary. */}
+          <EventMarkets eventId={event.id} initialMarkets={event.markets} />
         </div>
 
         <div className="flex flex-col gap-4">
-          <MatchChat event={event} />
+          <MatchChat teamAName={event.teamA.name} teamBName={event.teamB.name} />
         </div>
       </div>
     </div>

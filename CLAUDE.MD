@@ -57,6 +57,23 @@ Only the API (`apps/api`) is Dockerized for local development. The web (`apps/we
 - Execute API commands (package installation, migrations, seeders, tests, builds) inside the appropriate Docker container unless explicitly instructed otherwise.
 - For the web and admin apps, use local `pnpm` commands directly (e.g. `pnpm dev:web`, `pnpm dev:admin`) — they do not run in Docker.
 
+### Traefik — use the hostnames, not `localhost`
+
+A Traefik reverse proxy on port 80 fronts every service. **Always refer to services by their `*.chakrm.local` hostname** — in code, env files, docs, and when curling to check something. Reach for a raw `localhost:<port>` only when deliberately bypassing Traefik to isolate a problem.
+
+| Service | URL | Notes |
+| --- | --- | --- |
+| Consumer web | `http://chakrm.local` | `pnpm dev:web` on the host, port 3000 |
+| Admin console | `http://admin.chakrm.local` | `pnpm dev:admin` on the host, port 3002 |
+| API | `http://api.chakrm.local` | Swagger UI at `/api/docs`, OpenAPI JSON at `/api/docs-json` |
+| pgAdmin | `http://pgadmin.chakrm.local` | |
+
+- Routing comes from two places: Docker labels in `docker-compose.yml` for containerised services (api, pgadmin), and `traefik/dynamic.yml` for web/admin, which run on the host and so can't be discovered via the Docker provider (they are proxied through `host.docker.internal`).
+- These hostnames need entries in the OS hosts file, all pointing at `127.0.0.1`: `chakrm.local`, `admin.chakrm.local`, `api.chakrm.local`, `pgadmin.chakrm.local`.
+- The web app reaches the API via `NEXT_PUBLIC_API_URL` (see `apps/web/.env.example`), which defaults to `http://api.chakrm.local/api`.
+- **Traefik adds no CORS headers** — the API owns CORS entirely (`app.enableCors` in `apps/api/src/main.ts`, origins overridable via `CORS_ORIGINS`). Don't add a Traefik `headers` middleware for CORS: duplicated `Access-Control-Allow-Origin` headers are rejected by browsers.
+- Compose still maps the API to host port 3001 (`API_PORT`) and Postgres to 5432 as an escape hatch for direct access.
+
 When working on this project:
 - Prefer `docker compose` commands over local `npm`/`pnpm`/`yarn` for anything under `apps/api`.
 - Use local `pnpm` commands for anything under `apps/web` and `apps/admin`.

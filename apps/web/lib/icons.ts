@@ -38,6 +38,23 @@ export const SPORT_ICONS: Record<Sport, LucideIcon> = {
 
 export const ALL_SPORTS_ICON = LayoutDashboard;
 
+/**
+ * Icons keyed by the API's `Sport.slug`. Sports are rows in the database, so a
+ * new one can appear without a frontend change — always read through this map
+ * with `DEFAULT_SPORT_ICON` as the fallback, since indexing straight into an
+ * undefined component crashes the render.
+ */
+export const SPORT_ICONS_BY_SLUG: Record<string, LucideIcon> = {
+  basketball: Volleyball,
+  soccer: CircleDot,
+  football: Goal,
+  tennis: Activity,
+  dota2: Swords,
+  cs2: Swords,
+};
+
+export const DEFAULT_SPORT_ICON = Trophy;
+
 export const NOTIFICATION_ICONS: Record<NotificationIconName, LucideIcon> = {
   award: Award,
   flame: Flame,

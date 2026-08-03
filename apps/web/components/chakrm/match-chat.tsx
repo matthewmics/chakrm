@@ -9,10 +9,19 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CHAT_SEED, CURRENT_USER, EVENT_ACTIVITY_SEED } from "@/lib/mock-data";
-import type { ChatMessage, SportEvent } from "@/lib/types";
+import type { ChatMessage } from "@/lib/types";
 
-/** Live chat alongside a feed of who just committed Credits to which side. */
-export function MatchChat({ event }: { event: SportEvent }) {
+type MatchChatProps = {
+  teamAName: string;
+  teamBName: string;
+};
+
+/**
+ * Live chat alongside a feed of who just committed Credits to which side.
+ * Messages and activity are still seeded from mock data — only the team names
+ * come from the event.
+ */
+export function MatchChat({ teamAName, teamBName }: MatchChatProps) {
   const [messages, setMessages] = React.useState<ChatMessage[]>(CHAT_SEED);
   const [draft, setDraft] = React.useState("");
 
@@ -88,7 +97,7 @@ export function MatchChat({ event }: { event: SportEvent }) {
               <span className="min-w-0 flex-1 truncate text-sm">
                 {item.user}{" "}
                 <span className="text-faint">
-                  predicted {item.side === "a" ? event.a : event.b}
+                  predicted {item.side === "a" ? teamAName : teamBName}
                 </span>
               </span>
               <span className="font-mono text-xs text-primary tabular-nums">
