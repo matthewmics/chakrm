@@ -1,12 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { CircleCheckBig } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CircleCheckBig, LogIn } from "lucide-react";
 
 import { TeamBadge } from "@/components/chakrm/team-badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { CURRENT_USER, TEAM_COLORS } from "@/lib/mock-data";
+import { useAuth } from "@/hooks/use-auth";
+import { TEAM_COLORS } from "@/lib/mock-data";
 import {
   decimalOdds,
   estimateOptionPayout,
@@ -18,7 +20,22 @@ import { cn } from "@/lib/utils";
 
 const QUICK_AMOUNTS = [50, 100, 250, 500];
 
-export function PredictionSlip({ markets }: { markets: Market[] }) {
+/**
+ * Guests get the whole slip, interactive, with a working payout estimate — the
+ * pool split is the reason to sign up, so hiding it removes the hook. Only the
+ * final action is gated, and it stays enabled: a disabled button with no
+ * explanation is the worst version of this.
+ */
+export function PredictionSlip({
+  markets,
+  eventId,
+}: {
+  markets: Market[];
+  eventId: string;
+}) {
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
+
   const predictable = markets.filter((market) =>
     isMarketPredictable(market.status),
   );
@@ -37,6 +54,9 @@ export function PredictionSlip({ markets }: { markets: Market[] }) {
   const { payout, profit } = estimateOptionPayout(amount, option, market);
   const stake = Number(amount) || 0;
   const ready = market !== null && option !== null && stake > 0;
+
+  const balance = user?.credits ?? 0;
+  const overBalance = isAuthenticated && stake > balance;
 
   // Any change to the slip invalidates a previous confirmation.
   const update = (next: () => void) => {
@@ -135,12 +155,15 @@ export function PredictionSlip({ markets }: { markets: Market[] }) {
               {value}
             </button>
           ))}
-          <button
-            onClick={() => update(() => setAmount(String(CURRENT_USER.credits)))}
-            className="flex-1 rounded-lg border border-border bg-card py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
-          >
-            Max
-          </button>
+          {/* Nothing to max out to when signed out — there's no balance yet. */}
+          {isAuthenticated && (
+            <button
+              onClick={() => update(() => setAmount(String(balance)))}
+              className="flex-1 rounded-lg border border-border bg-card py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
+            >
+              Max
+            </button>
+          )}
         </div>
       </div>
 
@@ -167,19 +190,40 @@ export function PredictionSlip({ markets }: { markets: Market[] }) {
           Estimated payout updates as more Credits are committed before this
           market closes.
         </p>
+        {overBalance && (
+          <p role="alert" className="text-[11px] text-destructive">
+            That&apos;s more than your {balance.toLocaleString()} Credits.
+          </p>
+        )}
       </div>
 
       <div className="px-(--card-spacing)">
-        {confirmed ? (
+        {!isAuthenticated ? (
+          // Enabled on purpose. The click is the prompt to sign in, and `next`
+          // brings them straight back to this event afterwards.
+          <Button
+            size="lg"
+            className="w-full"
+            onClick={() =>
+              router.push(`/login?next=${encodeURIComponent(`/events/${eventId}`)}`)
+            }
+          >
+            <LogIn />
+            Log in to predict
+          </Button>
+        ) : confirmed ? (
           <Button variant="soft" size="lg" className="w-full" disabled>
             <CircleCheckBig />
             Prediction placed
           </Button>
         ) : (
+          // Still local-only: there is no predictions endpoint yet, so this
+          // confirms in the UI and persists nothing. The auth boundary around
+          // it is real; the write behind it is not.
           <Button
             size="lg"
             className="w-full"
-            disabled={!ready}
+            disabled={!ready || overBalance}
             onClick={() => setConfirmed(true)}
           >
             Confirm prediction

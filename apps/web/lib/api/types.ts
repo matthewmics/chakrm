@@ -4,6 +4,23 @@
  * generate this instead.
  */
 
+export type UserRole = "member" | "admin";
+
+/**
+ * The only user shape the API returns. No password or Google id — see
+ * `apps/api/src/auth/user.mapper.ts`, which builds it field by field.
+ */
+export type AuthUserResponse = {
+  id: string;
+  email: string;
+  name: string | null;
+  avatarUrl: string | null;
+  credits: number;
+  role: UserRole;
+  /** False for accounts created through Google that never set a password. */
+  hasPassword: boolean;
+};
+
 export type PaginatedResponse<T> = {
   items: T[];
   page: number;

@@ -25,6 +25,7 @@
   --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
+  --color-input-fill: var(--input-fill);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
   --color-accent-foreground: var(--accent-foreground);
@@ -94,8 +95,17 @@
   --destructive: #e5675a;
   --destructive-soft: rgba(229, 103, 90, 0.14);
 
-  --border: #22282a;
-  --input: #22282a;
+  /* On a near-black palette the WCAG flare constant dominates the contrast
+     formula — every luminance in play is far below 0.05, so small hex steps
+     collapse toward 1:1. #22282a on #141819 measured 1.20:1 against a 3:1
+     requirement for UI boundaries, which is why borders were near-invisible.
+     These are deliberately much larger jumps than a light theme would need. */
+  --border: #3a4245; /* 1.74:1 on card, was 1.20:1 */
+  --input: #4d5659; /* 2.38:1 on card — interactive, so brighter than --border */
+  /* Input FILL, split out from --input. The two used to be one token, so an
+     input's outline was the same colour as its own background at 30% alpha.
+     Keeps the old value: fills look unchanged, only the outline moved. */
+  --input-fill: #22282a;
   --ring: #10b981;
 
   /* Faint text and hairline dividers, one step quieter than muted. */
@@ -116,7 +126,7 @@
   --sidebar-primary-foreground: #04140d;
   --sidebar-accent: #141819;
   --sidebar-accent-foreground: #edeff1;
-  --sidebar-border: #1a1f21;
+  --sidebar-border: #2f3638; /* 1.54:1 on sidebar, was 1.14:1 */
   --sidebar-ring: #10b981;
 }
 

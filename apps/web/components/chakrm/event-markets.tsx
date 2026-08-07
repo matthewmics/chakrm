@@ -38,7 +38,7 @@ export function EventMarkets({ eventId, initialMarkets }: EventMarketsProps) {
 
   return (
     <>
-      <PredictionSlip markets={markets} />
+      <PredictionSlip markets={markets} eventId={eventId} />
       <div className="flex flex-col gap-3">
         {markets.map((market) => (
           <MarketCard key={market.id} market={market} />

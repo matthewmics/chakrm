@@ -7,10 +7,13 @@ import type {
   SportResponse,
 } from "./types";
 
+import type { ApiEventStatus } from "./types";
+
 export type ListEventsParams = {
   page?: number;
   limit?: number;
   sportSlug?: string;
+  status?: ApiEventStatus;
 };
 
 export function listSports(): Promise<SportResponse[]> {
@@ -21,9 +24,12 @@ export function listEvents(
   params: ListEventsParams,
 ): Promise<PaginatedResponse<EventListItemResponse>> {
   return apiFetch<PaginatedResponse<EventListItemResponse>>("/events", {
-    page: params.page,
-    limit: params.limit,
-    sportSlug: params.sportSlug,
+    searchParams: {
+      page: params.page,
+      limit: params.limit,
+      sportSlug: params.sportSlug,
+      status: params.status,
+    },
   });
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useSearchParams } from "next/navigation";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { Funnel, Loader2 } from "lucide-react";
 
@@ -21,8 +22,40 @@ const PAGE_SIZE = 12;
 /** "No sport filter" — the API omits the param entirely rather than sending a value. */
 const ALL_SPORTS = null;
 
+/**
+ * useSearchParams opts this subtree into client rendering, which Next requires
+ * a Suspense boundary for. The fallback mirrors the loaded layout so the filter
+ * row doesn't pop in.
+ */
 export default function EventsPage() {
-  const [sportSlug, setSportSlug] = React.useState<string | null>(ALL_SPORTS);
+  return (
+    <React.Suspense fallback={<EventsPageFallback />}>
+      <EventsPageContent />
+    </React.Suspense>
+  );
+}
+
+function EventsPageFallback() {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="h-9 w-64 animate-pulse rounded-lg bg-subtle" />
+      <EventGrid>
+        {Array.from({ length: 6 }, (_, index) => (
+          <SkeletonCard key={index} />
+        ))}
+      </EventGrid>
+    </div>
+  );
+}
+
+function EventsPageContent() {
+  // Seeded from ?sport= so the home page's sport chips land here pre-filtered.
+  // Initial value only — once the user touches a filter, local state owns it
+  // and the stale param in the URL is ignored rather than fighting the click.
+  const searchParams = useSearchParams();
+  const [sportSlug, setSportSlug] = React.useState<string | null>(
+    searchParams.get("sport") ?? ALL_SPORTS,
+  );
 
   const sportsQuery = useQuery({
     queryKey: ["sports"],

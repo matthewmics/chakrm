@@ -1,14 +1,23 @@
+"use client";
+
 import { ArrowDownRight, ArrowUpRight, Award } from "lucide-react";
 
 import { DataList, DataListRow } from "@/components/chakrm/data-list";
 import { SectionHeader } from "@/components/chakrm/section-header";
 import { StatCard } from "@/components/chakrm/stat-card";
 import { Card } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
 import { formatCredits } from "@/lib/format";
-import { CURRENT_USER, TRANSACTIONS } from "@/lib/mock-data";
+import { TRANSACTIONS } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 
+// Only the balance is real. Committed, rewards and the transaction list still
+// come from mock-data — there is no credit ledger yet, so there is nothing to
+// read them from. The balance is wired because the topbar shows it too, and
+// two different numbers for the same thing reads as a bug.
 export default function WalletPage() {
+  const { user } = useAuth();
+
   return (
     <div className="flex flex-col gap-5">
       <div className="grid gap-3 sm:grid-cols-3">
@@ -17,7 +26,7 @@ export default function WalletPage() {
             Current balance
           </span>
           <div className="px-(--card-spacing) font-mono text-3xl font-semibold tabular-nums">
-            {formatCredits(CURRENT_USER.credits)}
+            {formatCredits(user?.credits ?? 0)}
           </div>
           <span className="px-(--card-spacing) text-xs text-primary">
             Credits

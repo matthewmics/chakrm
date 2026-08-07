@@ -41,6 +41,22 @@ services:
       # back to the local dev list baked into src/main.ts.
       CORS_ORIGINS: ${CORS_ORIGINS:-}
       DATABASE_URL: postgresql://${POSTGRES_USER:-chakrm}:${POSTGRES_PASSWORD:-chakrm}@db:5432/${POSTGRES_DB:-chakrm}?schema=public
+      # Session cookie. The domain is deliberately the parent of chakrm.local so
+      # the same cookie is readable by web (chakrm.local), admin
+      # (admin.chakrm.local) and the API (api.chakrm.local). Consequence:
+      # reaching web at localhost:3000 is cross-site and the cookie is dropped —
+      # use http://chakrm.local when testing anything signed in.
+      JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-change-me}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
+      AUTH_COOKIE_DOMAIN: ${AUTH_COOKIE_DOMAIN:-.chakrm.local}
+      # Google rejects redirect URIs without a public TLD, so api.chakrm.local
+      # cannot be registered. The callback runs on the localhost port mapping
+      # below and hands off to the web app via a one-time code — see
+      # _tasks/auth-task.md 0.3.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost:3001/api/auth/google/callback}
+      WEB_APP_URL: ${WEB_APP_URL:-http://chakrm.local}
     depends_on:
       db:
         condition: service_healthy

@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { Sparkles } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
 import { CURRENT_SEASON } from "@/lib/mock-data";
-import { NAV_ITEMS, isNavItemActive } from "@/lib/nav";
+import { NAV_ITEMS, isNavItemActive, navItemHref } from "@/lib/nav";
 import { cn } from "@/lib/utils";
 
 /**
@@ -15,11 +16,12 @@ import { cn } from "@/lib/utils";
  */
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
 
   return (
     <>
       <Link
-        href="/dashboard"
+        href="/"
         onClick={onNavigate}
         className="mb-6 flex items-center gap-2 px-2"
       >
@@ -39,7 +41,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={navItemHref(item, isAuthenticated)}
               onClick={onNavigate}
               className={cn(
                 "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors",

@@ -1,4 +1,5 @@
 import { PrismaPg } from '@prisma/adapter-pg';
+import { hash } from '@node-rs/argon2';
 import { PrismaClient } from '../src/generated/prisma/client.js';
 
 const connectionString = process.env.DATABASE_URL;
@@ -788,12 +789,58 @@ function addBulkEvents() {
 
 addBulkEvents();
 
+/**
+ * Dev accounts for the login form. The password is committed on purpose — this
+ * seeder already refuses to run outside local dev (see the NODE_ENV guard at
+ * the top), and a fixture nobody knows the password to is useless.
+ *
+ * The Google account deliberately has `passwordHash: null` so the "this account
+ * has no password" branch in AuthService has something to exercise. Its
+ * googleId is a fake that no real Google profile will ever match, so signing in
+ * with a real Google account creates a fresh user rather than hijacking this one.
+ */
+const DEV_PASSWORD = 'password123';
+
+async function seedUsers() {
+  const passwordHash = await hash(DEV_PASSWORD);
+
+  await prisma.user.createMany({
+    data: [
+      {
+        id: 'user-demo',
+        email: 'demo@chakrm.dev',
+        name: 'Demo Player',
+        passwordHash,
+        credits: 12_480,
+      },
+      {
+        id: 'user-admin',
+        email: 'admin@chakrm.dev',
+        name: 'Admin',
+        passwordHash,
+        role: 'admin',
+        credits: 50_000,
+      },
+      {
+        id: 'user-google',
+        email: 'google-user@chakrm.dev',
+        name: 'Google Player',
+        passwordHash: null,
+        googleId: 'seed-google-id-not-a-real-subject',
+        avatarUrl: null,
+        credits: 1_000,
+      },
+    ],
+  });
+}
+
 async function main() {
   // Identifiers must be double-quoted — tables are PascalCase.
   await prisma.$executeRawUnsafe(
-    'TRUNCATE TABLE "MarketOption", "Market", "Event", "TeamSport", "Team", "Tournament", "Sport" CASCADE',
+    'TRUNCATE TABLE "MarketOption", "Market", "Event", "TeamSport", "Team", "Tournament", "Sport", "User" CASCADE',
   );
 
+  await seedUsers();
   await prisma.sport.createMany({ data: sports });
   await prisma.team.createMany({ data: teams });
   await prisma.teamSport.createMany({ data: teamSports });
@@ -842,8 +889,9 @@ async function main() {
     });
   }
 
-  const [sportCount, teamCount, teamSportCount, tournamentCount, eventCount, marketCount, optionCount] =
+  const [userCount, sportCount, teamCount, teamSportCount, tournamentCount, eventCount, marketCount, optionCount] =
     await Promise.all([
+      prisma.user.count(),
       prisma.sport.count(),
       prisma.team.count(),
       prisma.teamSport.count(),
@@ -854,8 +902,9 @@ async function main() {
     ]);
 
   console.log(
-    `Seeded ${sportCount} sports, ${teamCount} teams (${teamSportCount} team-sport links), ${tournamentCount} tournaments, ${eventCount} events, ${marketCount} markets, ${optionCount} market options.`,
+    `Seeded ${userCount} users, ${sportCount} sports, ${teamCount} teams (${teamSportCount} team-sport links), ${tournamentCount} tournaments, ${eventCount} events, ${marketCount} markets, ${optionCount} market options.`,
   );
+  console.log(`Dev login: demo@chakrm.dev / ${DEV_PASSWORD}`);
 }
 
 main()

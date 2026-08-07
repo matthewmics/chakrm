@@ -13,12 +13,35 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  member
+  admin
+}
+
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id    String  @id @default(uuid())
+  email String  @unique
+  name  String?
+
+  // Exactly one of these may be null, never both: a password account has no
+  // googleId until it links, and a Google account has no password unless the
+  // user sets one later. Prisma can't express "at least one is non-null", so
+  // AuthService enforces it — see users.service.ts.
+  passwordHash String?
+  googleId     String? @unique
+
+  avatarUrl String?
+
+  // Deliberately a plain column, not a derived balance. A proper ledger
+  // (CreditTransaction rows, balance summed from entries) belongs with the
+  // predictions work; this is the minimum that makes the topbar truthful.
+  credits Int @default(1000)
+
+  role UserRole @default(member)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 }
 
 // Declaration order is deliberate: Postgres native enums sort by declared
